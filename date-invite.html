@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Will you go on a date with me?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CONFIG — the only bit you need to touch. Change her name,
+     the question, and the food list right here.
+     ============================================================ */
+  :root {
+    --cream: #FBF3EC;
+    --blush: #F3D9D0;
+    --blush-line: #E9C4C0;
+    --rose: #C4577A;
+    --rose-dark: #9C3E5E;
+    --plum: #4A2338;
+    --gold: #D9A441;
+    --ink: #3A2A32;
+    --ink-soft: #7C6169;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Karla', sans-serif;
+    color: var(--ink);
+    background: radial-gradient(circle at 20% 15%, #FDF0EB 0%, var(--cream) 45%, #F6E4DC 100%);
+    overflow-x: hidden;
+  }
+
+  h1, h2, .display {
+    font-family: 'Fraunces', serif;
+    color: var(--plum);
+    margin: 0;
+  }
+
+  /* ---------- ambient floating hearts ---------- */
+  .ambient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .ambient span {
+    position: absolute;
+    bottom: -10vh;
+    font-size: 22px;
+    color: var(--rose);
+    opacity: 0;
+    animation: floatUp linear infinite;
+    filter: saturate(0.8);
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(0) rotate(-6deg) scale(0.8); opacity: 0; }
+    8%   { opacity: 0.35; }
+    88%  { opacity: 0.3; }
+    100% { transform: translateY(-115vh) rotate(10deg) scale(1.1); opacity: 0; }
+  }
+
+  /* ---------- page shell ---------- */
+  .stage {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .card {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    background: #FFFDFB;
+    border-radius: 28px;
+    box-shadow: 0 30px 60px -25px rgba(74, 35, 56, 0.35), 0 2px 0 rgba(255,255,255,0.6) inset;
+    padding: 40px 32px 32px;
+    text-align: center;
+    border: 1px solid #FBEAE3;
+  }
+
+  /* ---------- progress hearts ---------- */
+  .progress {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .progress i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--blush-line);
+    transition: all .35s ease;
+  }
+  .progress i.on {
+    background: var(--rose);
+    transform: scale(1.2);
+  }
+
+  /* ---------- steps ---------- */
+  .step { display: none; animation: riseIn .5s ease both; }
+  .step.active { display: block; }
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .headline {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: 6px;
+  }
+  .headline em {
+    font-style: italic;
+    color: var(--rose);
+  }
+
+  .sub {
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    margin-top: 6px;
+    margin-bottom: 26px;
+    line-height: 1.5;
+  }
+
+  .squiggle {
+    display: block;
+    margin: 10px auto 24px;
+    width: 90px;
+  }
+
+  /* ---------- GIFs ---------- */
+  .cat-gif {
+    width: 100%;
+    max-width: 275px;
+    border-radius: 16px;
+    margin: 0 auto 16px;
+    display: block;
+    box-shadow: 0 8px 20px -8px rgba(0,0,0,0.15);
+  }
+
+  /* ---------- step 1: the question ---------- */
+  #q-photo {
+    font-size: 54px;
+    margin-bottom: 6px;
+    line-height: 1;
+  }
+
+  .yn-row {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 30px;
+    min-height: 64px;
+  }
+
+  .btn {
+    font-family: 'Karla', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    padding: 15px 30px;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+    animation: pulse 2s infinite; 
+    color: #fff;
+    box-shadow: 0 10px 24px -10px rgba(196, 87, 122, 0.65);
+  }
+  @keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 26px -10px rgba(196, 87, 122, 0.75); }
+  .btn-primary:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--blush-line);
+    padding: 15px 22px;
+  }
+  .btn-ghost:hover { background: var(--blush); }
+
+  #no-btn {
+    position: relative;
+    background: #fff;
+    color: var(--ink-soft);
+    border: 1px solid var(--blush-line);
+    font-weight: 600;
+    padding: 12px 20px;
+    font-size: 14px;
+    /* Smooth sliding effect */
+    transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  #no-btn.dodging {
+    position: fixed !important;
+    z-index: 50;
+    /* Ensures the transition remains smooth while moving */
+    will-change: left, top;
+  }
+
+  .back-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 26px;
+  }
+
+  /* ---------- step 2: date + time ---------- */
+  .field-label {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 18px 0 10px;
+  }
+
+  .cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .cal-head button {
+    background: var(--blush);
+    border: none;
+    color: var(--rose-dark);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+  }
+  .cal-head button:disabled { opacity: .3; cursor: not-allowed; }
+  .cal-month { font-family: 'Fraunces', serif; font-weight: 600; color: var(--plum); font-size: 15px; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    text-align: center;
+  }
+  .cal-grid .dow {
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight: 700;
+    padding-bottom: 4px;
+  }
+  .cal-grid button {
+    aspect-ratio: 1;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    font-family: 'Karla', sans-serif;
+    font-size: 13.5px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .cal-grid button.pad { visibility: hidden; }
+  .cal-grid button:disabled { color: #E3D3CE; cursor: not-allowed; }
+  .cal-grid button:not(:disabled):hover { background: var(--blush); }
+  .cal-grid button.picked {
+    background: var(--rose);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .time-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .time-grid button {
+    border: 1px solid var(--blush-line);
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px 4px;
+    font-family: 'Karla', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .time-grid button:hover { background: var(--blush); }
+  .time-grid button.picked {
+    background: var(--rose);
+    border-color: var(--rose);
+    color: #fff;
+  }
+
+  /* ---------- step 3 & 4: grids ---------- */
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .option-card {
+    border: 1.5px solid var(--blush-line);
+    background: #fff;
+    border-radius: 16px;
+    padding: 14px 6px 10px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .option-card .emoji { font-size: 26px; display: block; margin-bottom: 6px; }
+  .option-card .label { font-size: 12px; font-weight: 600; color: var(--ink); }
+  .option-card:hover { background: var(--blush); }
+  .option-card.picked {
+    border-color: var(--rose);
+    background: #FCEEF1;
+  }
+  .option-card.picked .label { color: var(--rose-dark); }
+
+  /* ---------- step 5: confirmation ---------- */
+  .recap {
+    text-align: left;
+    background: var(--blush);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin: 22px 0;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .recap b { color: var(--plum); }
+
+  .final-emoji { font-size: 60px; margin-bottom: 4px; }
+
+  footer.note {
+    margin-top: 18px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    opacity: .8;
+  }
+    @keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+.shake {
+  animation: shake 0.2s ease-in-out infinite;
+}
+
+  /* confetti hearts burst */
+  .burst-heart {
+    position: fixed;
+    top: 45%;
+    left: 50%;
+    font-size: 20px;
+    pointer-events: none;
+    z-index: 60;
+    animation: burst 1.6s ease-out forwards;
+  }
+
+  @keyframes burst {
+    0%   { transform: translate(-50%,-50%) scale(0.4) rotate(0deg); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(var(--rot)); opacity: 0; }
+  }
+
+  @media (max-width: 420px) {
+    .card { padding: 32px 20px 26px; border-radius: 22px; }
+    .headline { font-size: 23px; }
+    .options-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ambient span { animation: none; opacity: 0; }
+    .step { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient" id="ambient"></div>
+
+<div class="stage">
+  <div class="card" id="card">
+
+    <div class="progress" id="progress">
+      <i class="on" data-i="0"></i>
+      <i data-i="1"></i>
+      <i data-i="2"></i>
+      <i data-i="3"></i>
+      <i data-i="4"></i>
+      <i data-i="5"></i>
+    </div>
+
+    <!-- STEP 1 — the question -->
+    <section class="step active" data-step="0">
+      <div id="q-photo">🌸💌🌸</div>
+      <h1 class="headline">Hello <em>Mahal </em> ko!!!<br>will you go on a date with me? 😊❤️</h1><br>
+      <p class="sub">No pressure. Well... a little pressure.</p>
+
+      <div class="yn-row">
+        <button class="btn btn-primary" id="yes-btn">Yes 🤍</button>
+        <button class="btn" id="no-btn">No</button>
+      </div>
+    </section>
+
+    <!-- STEP 2 — Excitement (Separated GIF Step) -->
+    <section class="step" data-step="1">
+      <img src="https://media1.tenor.com/m/fitGu2TwtHoAAAAd/cat-hyppy.gif" alt="Happy Cat" class="cat-gif">
+      <div class="eyebrow">Step 2 of 6</div>
+      <h2 class="headline" style="font-size:28px;">YAYYYY! 🎉</h2>
+      <p class="sub" style="font-size:16px;">I'm so excited! Let's plan our date.</p>
+      
+      <div class="yn-row" style="margin-top: 20px;">
+        <button class="btn btn-primary" onclick="goTo(2)" style="width:100%;">Next →</button>
+      </div>
+    </section>
+
+    <!-- STEP 3 — date & time -->
+    <section class="step" data-step="2">
+      <div class="eyebrow">Step 3 of 6</div>
+      <h2 class="headline" style="font-size:23px;">Yay! When are you free? 🐾</h2>
+      <p class="sub">Pick whatever works for you.</p>
+
+      <div class="field-label">Pick a day</div>
+      <div class="cal-head">
+        <button id="cal-prev" aria-label="Previous month">‹</button>
+        <span class="cal-month" id="cal-month"></span>
+        <button id="cal-next" aria-label="Next month">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+
+      <div class="field-label">What time?</div>
+      <div class="time-grid" id="time-grid"></div>
+
+      <div class="back-row">
+        <button class="btn btn-ghost" data-back>← Back</button>
+        <button class="btn btn-primary" id="date-next" disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- STEP 4 — food -->
+    <section class="step" data-step="3">
+      <div class="eyebrow">Step 4 of 6</div>
+      <h2 class="headline" style="font-size:23px;">What are we eating? 🍽️✨</h2>
+      <p class="sub">Pick as many as you like.</p>
+
+      <div class="options-grid" id="food-grid"></div>
+
+      <div class="back-row">
+        <button class="btn btn-ghost" data-back>← Back</button>
+        <button class="btn btn-primary" id="food-next" disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- STEP 5 — activities -->
+    <section class="step" data-step="4">
+      <div class="eyebrow">Step 5 of 6</div>
+      <h2 class="headline" style="font-size:23px;">What should we do? 🎡✨</h2>
+      <p class="sub">Select the activities you'd love to do together!</p>
+
+      <div class="options-grid" id="activity-grid"></div>
+
+      <div class="back-row">
+        <button class="btn btn-ghost" data-back>← Back</button>
+        <button class="btn btn-primary" id="activity-next" disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- STEP 6 — confirmation -->
+    <section class="step" data-step="5">
+      <img src="https://media.tenor.com/WiQQRwR2QFAAAAAm/cute-panda.webp" alt="Excited Cat" id="confirm-gif" class="cat-gif" style="display:none; margin-bottom: 20px;">
+      <div class="final-emoji" id="final-emoji">🎉💗</div>
+      <h2 class="headline" style="font-size:25px;">It's a Date!</h2>
+      <p class="sub" id="recap-sub">Here's what you picked:</p>
+
+      <div class="recap" id="recap"></div>
+      
+      <button class="btn btn-primary" id="confirm-btn" style="width:100%;">Lock it in 💌</button>
+      <p class="sub" id="thanks-msg" style="display:none; margin-top:16px; margin-bottom:0;">Yieeeee can't wait. See you then mahal ko!!!🥰💗</p>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — personalize here
+   ============================================================ */
+const CONFIG = {
+  foodOptions: [
+    { emoji: '🍕', label: 'Pizza' },
+    { emoji: '🍣', label: 'Sushi' },
+    { emoji: '🍔', label: 'Burgers' },
+    { emoji: '🍝', label: 'Pasta' },
+    { emoji: '🌮', label: 'Tacos' },
+    { emoji: '🍜', label: 'Ramen' },
+    { emoji: '🥗', label: 'Something healthy' },
+    { emoji: '🍦', label: 'Ice cream' },
+    { emoji: '☕', label: "Coffee date" },
+    { emoji: '🍗', label: "Unli wings" },
+    { emoji: '🥓', label: "Samgyupsal" },
+    { emoji: '🍟', label: "Fries" },
+    { emoji: '🍽️', label: "Mcdo" },
+    { emoji: '🍽️', label: "Jollibee" },
+    { emoji: '🍢', label: "Street Foods" },
+    { emoji: '😏', label: "Me" },
+  ],
+  activityOptions: [
+    { emoji: '🎬', label: 'Movies' },
+    { emoji: '🏖️', label: 'Beach' },
+    { emoji: '🌳', label: 'Park' },
+    { emoji: '🛍️', label: 'Shopping' },
+    { emoji: '🎤', label: 'Concert' },
+    { emoji: '🏛️', label: 'Museum' },
+    { emoji: '🐠', label: 'Aquarium' },
+    { emoji: '🥾', label: 'Hiking' },
+    { emoji: '🦁', label: 'Zoo' },
+    { emoji: '🛵', label: 'Rides' },
+    { emoji: '🕹️', label: 'Arcade' },
+    { emoji: '🤪', label: 'Freaky time' },
+  ],
+  timeSlots: ['7:00 AM','8:00 PM','9:00 PM','10:00 PM','11:00 PM','12:00 PM',
+              '1:00 PM','2:00 PM','3:00 PM','4:00 PM','5:00 PM','6:00 PM'],
+  noExcuses: ['No', 'Wait, no', 'Try again?', 'Nope 🙈', 'Are you sure?', 'Pookie please', 'Come on', 'Just say yes 🥺', 'Mahal pleaseeeee','Im begging you huhu','Yes or Yes','Sige naaaaaa','Isa','Dalawa','last warning!','Please 😭','Pleaseeeee say YES 😭']
+};
+
+/* ---------- ambient floating hearts ---------- */
+(function ambientHearts(){
+  const wrap = document.getElementById('ambient');
+  const glyphs = ['🤍','💗','🌸'];
+  const count = window.innerWidth < 480 ? 9 : 14;
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('span');
+    s.textContent = glyphs[i % glyphs.length];
+    s.style.left = Math.random()*100 + 'vw';
+    s.style.fontSize = (14 + Math.random()*16) + 'px';
+    s.style.animationDuration = (10 + Math.random()*10) + 's';
+    s.style.animationDelay = (Math.random()*10) + 's';
+    wrap.appendChild(s);
+  }
+})();
+
+/* ---------- step navigation ---------- */
+let currentStep = 0;
+const steps = document.querySelectorAll('.step');
+const dots = document.querySelectorAll('.progress i');
+
+function goTo(i) {
+  currentStep = i;
+  steps.forEach(s => s.classList.toggle('active', +s.dataset.step === i));
+  dots.forEach(d => d.classList.toggle('on', +d.dataset.i <= i));
+}
+document.querySelectorAll('[data-back]').forEach(b => {
+  b.addEventListener('click', () => goTo(currentStep - 1));
+});
+
+/* ---------- step 1: yes / runaway no ---------- */
+const yesBtn = document.getElementById('yes-btn');
+const noBtn = document.getElementById('no-btn');
+let noTries = 0;
+let yesScale = 1;
+
+function dodgeNo() {
+  noTries++;
+  noBtn.textContent = CONFIG.noExcuses[Math.min(noTries, CONFIG.noExcuses.length - 1)];
+
+  noBtn.classList.add('shake');
+  setTimeout(() => noBtn.classList.remove('shake'), 300);
+
+  // Capture card boundaries
+  const cardRect = document.getElementById('card').getBoundingClientRect();
+  
+  if (!noBtn.classList.contains('dodging')) {
+    noBtn.style.position = 'fixed'; 
+    noBtn.classList.add('dodging');
+  }
+
+  // Define the "near" area: A buffer zone around the card
+  const buffer = 100; // Pixels away from the card to allow movement
+  const minX = Math.max(20, cardRect.left - buffer);
+  const maxX = Math.min(window.innerWidth - noBtn.offsetWidth - 20, cardRect.right + buffer - noBtn.offsetWidth);
+  const minY = Math.max(20, cardRect.top - buffer);
+  const maxY = Math.min(window.innerHeight - noBtn.offsetHeight - 20, cardRect.bottom + buffer - noBtn.offsetHeight);
+
+  // Calculate random position within this specific zone
+  const nx = Math.random() * (maxX - minX) + minX;
+  const ny = Math.random() * (maxY - minY) + minY;
+
+  // Apply new position
+  noBtn.style.left = nx + 'px';
+  noBtn.style.top = ny + 'px';
+
+  // Increase "Yes" button scale
+  yesScale = Math.min(yesScale + 0.15, 2.5);
+  yesBtn.style.transform = `scale(${yesScale})`;
+}
+
+noBtn.addEventListener('mouseenter', dodgeNo);
+noBtn.addEventListener('click', (e) => { e.preventDefault(); dodgeNo(); });
+noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); dodgeNo(); }, { passive: false });
+
+yesBtn.addEventListener('click', () => {
+  burstHearts(yesBtn);
+  setTimeout(() => goTo(1), 350);
+});
+
+/* ---------- step 3: calendar + time ---------- */
+let viewDate = new Date();
+viewDate.setDate(1);
+const today = new Date(); today.setHours(0,0,0,0);
+let pickedDate = null, pickedTime = null;
+
+const calGrid = document.getElementById('cal-grid');
+const calMonth = document.getElementById('cal-month');
+const calPrev = document.getElementById('cal-prev');
+const calNext = document.getElementById('cal-next');
+const dateNextBtn = document.getElementById('date-next');
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function renderCalendar() {
+  calMonth.textContent = `${monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+  calGrid.innerHTML = '';
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'dow'; el.textContent = d;
+    calGrid.appendChild(el);
+  });
+
+  const firstDow = viewDate.getDay();
+  const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 0).getDate();
+
+  for (let i = 0; i < firstDow; i++) {
+    const pad = document.createElement('button');
+    pad.className = 'pad'; pad.disabled = true;
+    calGrid.appendChild(pad);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const btn = document.createElement('button');
+    btn.textContent = d;
+    const thisDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), d);
+    if (thisDate < today) btn.disabled = true;
+    if (pickedDate && thisDate.getTime() === pickedDate.getTime()) btn.classList.add('picked');
+    btn.addEventListener('click', () => {
+      pickedDate = thisDate;
+      renderCalendar();
+      checkDateNext();
+    });
+    calGrid.appendChild(btn);
+  }
+
+  const isCurrentMonth = viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() === today.getMonth();
+  calPrev.disabled = isCurrentMonth;
+}
+calPrev.addEventListener('click', () => { viewDate.setMonth(viewDate.getMonth()-1); renderCalendar(); });
+calNext.addEventListener('click', () => { viewDate.setMonth(viewDate.getMonth()+1); renderCalendar(); });
+
+const timeGrid = document.getElementById('time-grid');
+CONFIG.timeSlots.forEach(t => {
+  const btn = document.createElement('button');
+  btn.textContent = t;
+  btn.addEventListener('click', () => {
+    pickedTime = t;
+    [...timeGrid.children].forEach(c => c.classList.remove('picked'));
+    btn.classList.add('picked');
+    checkDateNext();
+  });
+  timeGrid.appendChild(btn);
+});
+
+function checkDateNext() {
+  dateNextBtn.disabled = !(pickedDate && pickedTime);
+}
+renderCalendar();
+dateNextBtn.addEventListener('click', () => goTo(3));
+
+/* ---------- step 4: food ---------- */
+const foodGrid = document.getElementById('food-grid');
+const foodNextBtn = document.getElementById('food-next');
+const pickedFoods = new Set();
+
+CONFIG.foodOptions.forEach(f => {
+  const card = document.createElement('div');
+  card.className = 'option-card';
+  card.innerHTML = `<span class="emoji">${f.emoji}</span><span class="label">${f.label}</span>`;
+  card.addEventListener('click', () => {
+    if (pickedFoods.has(f.label)) { pickedFoods.delete(f.label); card.classList.remove('picked'); }
+    else { pickedFoods.add(f.label); card.classList.add('picked'); }
+    foodNextBtn.disabled = pickedFoods.size === 0;
+  });
+  foodGrid.appendChild(card);
+});
+foodNextBtn.addEventListener('click', () => goTo(4));
+
+/* ---------- step 5: activities ---------- */
+const activityGrid = document.getElementById('activity-grid');
+const activityNextBtn = document.getElementById('activity-next');
+const pickedActivities = new Set();
+
+CONFIG.activityOptions.forEach(a => {
+  const card = document.createElement('div');
+  card.className = 'option-card';
+  card.innerHTML = `<span class="emoji">${a.emoji}</span><span class="label">${a.label}</span>`;
+  card.addEventListener('click', () => {
+    if (pickedActivities.has(a.label)) { pickedActivities.delete(a.label); card.classList.remove('picked'); }
+    else { pickedActivities.add(a.label); card.classList.add('picked'); }
+    activityNextBtn.disabled = pickedActivities.size === 0;
+  });
+  activityGrid.appendChild(card);
+});
+activityNextBtn.addEventListener('click', () => { buildRecap(); goTo(5); });
+
+/* ---------- step 6: recap + confirm ---------- */
+function buildRecap() {
+  const dateStr = pickedDate ? pickedDate.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' }) : '';
+  document.getElementById('recap').innerHTML = `
+    <div>📅 <b>${dateStr}</b></div>
+    <div>🕐 <b>${pickedTime}</b></div>
+    <div>🍽️ <b>${[...pickedFoods].join(', ')}</b></div>
+    <div>🎡 <b>${[...pickedActivities].join(', ')}</b></div>
+  `;
+}
+
+document.getElementById('confirm-btn').addEventListener('click', function () {
+  
+  // 1. Prepare the data to be sent
+  const dateStr = pickedDate ? pickedDate.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' }) : 'Not selected';
+  const data = {
+    date: dateStr,
+    time: pickedTime || 'Not selected',
+    food: [...pickedFoods].join(', '),
+    activities: [...pickedActivities].join(', ')
+  };
+
+  // 2. Send the data to your Formspree endpoint
+  // Replace the URL below with your actual Formspree endpoint URL
+  fetch('https://formspree.io/f/xeebrrkk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(response => {
+    if (response.ok) {
+      console.log("Response sent successfully!");
+    }
+  })
+  .catch(error => console.error("Error sending data:", error));
+
+  // 3. Keep your existing visual logic
+  for(let i = 0; i < 50; i++) {
+    setTimeout(() => burstHearts(this), i * 50);
+  }
+  
+  this.style.display = 'none';
+  document.getElementById('recap-sub').style.display = 'none';
+  document.getElementById('recap').style.display = 'none';
+  document.getElementById('final-emoji').style.display = 'none';
+  
+  const confirmGif = document.getElementById('confirm-gif');
+  confirmGif.style.display = 'block';
+  
+  const thanksMsg = document.getElementById('thanks-msg');
+  thanksMsg.style.display = 'block';
+  thanksMsg.style.fontSize = '18px';
+  thanksMsg.style.fontWeight = 'bold';
+});
+
+/* ---------- confetti burst ---------- */
+function burstHearts(fromEl) {
+  const rect = fromEl.getBoundingClientRect();
+  const glyphs = ['💗','🤍','💕','🌸','✨'];
+  for (let i = 0; i < 18; i++) {
+    const h = document.createElement('span');
+    h.className = 'burst-heart';
+    h.textContent = glyphs[Math.floor(Math.random()*glyphs.length)];
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 80 + Math.random() * 160;
+    h.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    h.style.setProperty('--dy', Math.sin(angle) * dist - 40 + 'px');
+    h.style.setProperty('--rot', (Math.random()*80 - 40) + 'deg');
+    h.style.left = (rect.left + rect.width/2) + 'px';
+    h.style.top = (rect.top + rect.height/2) + 'px';
+    document.body.appendChild(h);
+    setTimeout(() => h.remove(), 1700);
+  }
+}
+</script>
+</body>
+</html>
